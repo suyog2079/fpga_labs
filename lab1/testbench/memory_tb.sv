@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module memory_tb;
 
   localparam AD_LINES = 16;
@@ -5,10 +7,14 @@ module memory_tb;
 
   logic rd_wr_bar;
   logic [AD_LINES-1:0] addr;
-  logic [DATA_LINES-1:0] wd;
-  logic [DATA_LINES-1:0] rd;
   logic clk;
   logic cs;
+
+  tri [DATA_LINES-1:0] data;
+  logic [DATA_LINES-1:0] data_drv;
+
+  // Drive bus only during writes
+  assign data = (!rd_wr_bar && cs) ? data_drv : 'z;
 
   memory #(
       .AD_LINES  (AD_LINES),
@@ -16,96 +22,91 @@ module memory_tb;
   ) dut (
       .rd_wr_bar(rd_wr_bar),
       .addr(addr),
-      .wd(wd),
-      .rd(rd),
+      .data(data),
       .clk(clk),
       .cs(cs)
   );
 
-  //----------------------------------
-  // Clock
-  //----------------------------------
+  // Clock generation
+  initial begin
+    clk = 0;
+    forever #5 clk = ~clk;
+  end
 
-  initial clk = 0;
-  always #5 clk = ~clk;
-
-  //----------------------------------
   // Write task
-  //----------------------------------
-
-  task automatic write_mem(input [AD_LINES-1:0] a, input [DATA_LINES-1:0] d);
+  task automatic mem_write(input [AD_LINES-1:0] wr_addr, input [DATA_LINES-1:0] wr_data);
     begin
-      @(posedge clk);
-
-      addr      = a;
-      wd        = d;
+      @(negedge clk);
+      cs        = 1;
       rd_wr_bar = 0;
-      cs        = 1;
+      addr      = wr_addr;
+      data_drv  = wr_data;
+
+      @(posedge clk);  // write occurs here
 
       @(negedge clk);
-
-      cs = 0;
-
-      $display("[%0t] WRITE addr=%h data=%h", $time, a, d);
+      cs       = 0;
+      data_drv = 'z;
     end
   endtask
 
-  //----------------------------------
   // Read task
-  //----------------------------------
-
-  task automatic read_mem(input [AD_LINES-1:0] a, output [DATA_LINES-1:0] d);
+  task automatic mem_read(input [AD_LINES-1:0] rd_addr, output [DATA_LINES-1:0] rd_data);
     begin
-      @(posedge clk);
-
-      addr      = a;
-      rd_wr_bar = 1;
+      @(negedge clk);
       cs        = 1;
+      rd_wr_bar = 1;
+      addr      = rd_addr;
+
+      #1;  // allow combinational read
+      rd_data = data;
 
       @(negedge clk);
-      #1;
-
-      d  = rd;
-
       cs = 0;
-
-      $display("[%0t] READ  addr=%h data=%h", $time, a, d);
     end
   endtask
 
-  logic [DATA_LINES-1:0] data;
-
-  //----------------------------------
-  // Tests
-  //----------------------------------
+  logic [7:0] rdata;
 
   initial begin
     cs        = 0;
     rd_wr_bar = 1;
-    addr      = '0;
-    wd        = '0;
+    addr      = 0;
+    data_drv  = 'z;
 
-    repeat (2) @(posedge clk);
+    // Write some values
+    mem_write(16'h0000, 8'hAA);
+    mem_write(16'h0001, 8'h55);
+    mem_write(16'h1234, 8'hDE);
+    mem_write(16'hFFFF, 8'hAD);
 
-    write_mem(16'h0010, 8'hAA);
-    read_mem(16'h0010, data);
+    // Read them back
+    mem_read(16'h0000, rdata);
+    $display("Addr=0000 Data=%h Expected=AA", rdata);
 
-    if (data !== 8'hAA) begin
-      $display("TEST1 FAIL");
-      $finish;
-    end
-    $display("TEST1 PASS");
+    mem_read(16'h0001, rdata);
+    $display("Addr=0001 Data=%h Expected=55", rdata);
 
-    write_mem(16'h1234, 8'h55);
-    read_mem(16'h1234, data);
+    mem_read(16'h1234, rdata);
+    $display("Addr=1234 Data=%h Expected=DE", rdata);
 
-    if (data !== 8'h55) begin
-      $display("TEST2 FAIL");
-      $finish;
-    end
-    $display("TEST2 PASS");
+    mem_read(16'hFFFF, rdata);
+    $display("Addr=FFFF Data=%h Expected=AD", rdata);
 
-    $display("ALL TESTS PASSED");
+    // Assertions
+    mem_read(16'h0000, rdata);
+    assert (rdata == 8'hAA);
+
+    mem_read(16'h0001, rdata);
+    assert (rdata == 8'h55);
+
+    mem_read(16'h1234, rdata);
+    assert (rdata == 8'hDE);
+
+    mem_read(16'hFFFF, rdata);
+    assert (rdata == 8'hAD);
+
+    $display("TEST PASSED");
     $finish;
   end
 

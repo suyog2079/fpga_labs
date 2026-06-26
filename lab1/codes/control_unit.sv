@@ -1,49 +1,97 @@
-define mem_cell_size = 12;
-module control_unit(input [12:0] opcode, input clk,
-	output [2:0]readreg,
-	[2:0]writereg,
-	[2:0] aluop,
-	[7:0] immediate,
-	[mem_cell_size - 1:0] mem_addr [1023:0],
-	mem_rd_wr_bar
+module control_unit #(
+    parameter int AD_LINES   = 16,
+    parameter int DATA_LINES = 8
+) (
+    output logic [AD_LINES - 1 : 0] addr,
+    input logic clk,
+    output logic mem_cs,
+    output logic rd_wr_bar,
+    wire logic data
 );
 
-reg [mem_cell_size -1: 0] pc; //program counter read
-reg [mem_cell_size-1: 0] opcode_reg;
-assign mem_rd_wr_bar = 1; // default read
+  reg pc;
+  reg ir;
 
-memory mem(.rd_wr_bar(mem_rd_wr_bar), .addr(mem_addr), .out(opcode));
+  memory #(
+      .AD_LINES  (AD_LINES),
+      .DATA_LINES(DATA_LINES)
+  ) mem (
+      .rd_wr_bar(rd_wr_bar),
+      .clk(clk),
+      .cs(mem_cs),
+      .addr(addr),
+      .data(data)
+  );
 
-assign pc = mem_cell_size'b0;
-enum {fetch, mem_read, decode, fetch_operand, execute} state;
-state = fetch;
-always @(posedge clk)
-begin
-	case(state)
-		fetch:
-			mem_rd_wr_bar = 1'b1;
-		mem_addr = pc;
-		pc = pc + 1;
-		state = decode;
+  typedef enum {
+    FETCH,
+    DECODE,
+    EXECUTE,
+    STORE
+  } state_t;
+  state_t state = FETCH;
 
-		mem_read: 
-			mem_rd_wr_bar = 1'b1;
-		mem_addr = pc;
-		pc = pc + 1;
-		state = decode;
+  logic   recv_data = data;
 
-		decode:
-			opcode_reg = opcode;
-		if(opcode[mem_cell_size - 1] == 1'b1)
-			immediate = opcode_reg[7:0];
+  always_ff @(posedge clk) begin
+    case (state)
+      FETCH: begin
+        mem_addr <= pc;
+        rd_wr_bar <= 1'b1;
+        pc <= pc + 1;
+        state <= DECODE;
+      end
 
-		else
-			pc = pc + 1;
-		state = mem_read;
+      DECODE: begin
+        ir <= recv_data;
 
+        case (ir[7:7])
 
+          // either move tyoe or load type instruction
+          1'b0: begin
+            case (ir[6:6])
+              // move type instruction
+              // 00, 3 source register select and 3 destination register
+              // select
+              1'b0: begin
 
+              end
+              // load/store type instruction
+              // bit division not done yet
+              1'b1: begin
 
-		fetch_operand:
+              end
+              default: begin
 
-			execute
+              end
+            endcase
+          end
+
+          // arithematic / logical type instruction
+          //1, 3 source register select and 4 operation select bits
+          1'b1: begin
+
+          end
+
+          default: begin
+
+          end
+        endcase
+      end
+
+      EXECUTE: begin
+
+      end
+
+      STORE: begin
+
+      end
+
+      default: state <= FETCH;
+
+    endcase
+
+  end
+
+endmodule
+

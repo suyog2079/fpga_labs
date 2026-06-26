@@ -1,6 +1,6 @@
 module mux_8x1_8bit_behv (
     input [2:0] sel,
-    input [7:0] a[0 : 7],
+    input [7:0] a[0:7],
     output reg [7:0] out
 );
   always @(*) begin

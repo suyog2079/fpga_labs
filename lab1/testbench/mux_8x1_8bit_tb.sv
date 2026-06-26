@@ -1,6 +1,6 @@
 module mux_8x1_8bit_tb ();
   reg [2:0] sel;
-  reg [7:0] a[7:0];
+  reg [7:0] a [7:0];
   wire [7:0] out;
 
   mux_8x1_8bit_struct m8b (

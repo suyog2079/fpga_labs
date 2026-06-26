@@ -108,7 +108,7 @@ module subtractor_8bit (
   wire [7:0] compb;
   complement_8bit c8b (
       .a(b),
-      .b(compb)
+      .out(compb)
   );
   adder_8bit a8b (
       .a(a),

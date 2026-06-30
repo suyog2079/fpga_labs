@@ -2,26 +2,24 @@ module control_unit #(
     parameter int AD_LINES   = 16,
     parameter int DATA_LINES = 8
 ) (
-    output logic [AD_LINES - 1 : 0] addr,
+    // common signals
     input logic clk,
+    output logic [AD_LINES - 1 : 0] addr_bus,
+    inout wire [DATA_LINES -1 : 0] data_bus,
+    // memory control lines and signals.
     output logic mem_cs,
-    output logic rd_wr_bar,
-    wire logic data
+    output logic mem_rd_wr_bar,
+
+    // register bank control lines and signals
+    output logic [2:0] reg_sel[1:0],
+    output alu_alu_db_bar,
+    output alu_rd_wr_bar,
+    output mv,
+    output logic reg_cs
 );
 
   reg pc;
   reg ir;
-
-  memory #(
-      .AD_LINES  (AD_LINES),
-      .DATA_LINES(DATA_LINES)
-  ) mem (
-      .rd_wr_bar(rd_wr_bar),
-      .clk(clk),
-      .cs(mem_cs),
-      .addr(addr),
-      .data(data)
-  );
 
   typedef enum {
     FETCH,

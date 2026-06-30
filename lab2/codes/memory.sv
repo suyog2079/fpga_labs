@@ -3,18 +3,17 @@ module memory #(
     parameter int DATA_LINES = 8
 ) (
     input logic rd_wr_bar,
-    input logic [AD_LINES - 1 : 0] addr,
-    inout wire [DATA_LINES - 1 : 0] data,
-    //output logic [DATA_LINES - 1: 0] rd,
+    input logic [AD_LINES - 1 : 0] addr_bus,
+    inout wire [DATA_LINES - 1 : 0] data_bus,
     input logic clk,
     input logic cs
 );
 
   logic [DATA_LINES - 1:0] mem[0:(1<<AD_LINES) -1];
-  assign data = (cs && rd_wr_bar) ? mem[addr] : 'z;
+  assign data_bus = (cs && rd_wr_bar) ? mem[addr_bus] : 'z;
   always_ff @(posedge clk) begin
     if (cs && !rd_wr_bar) begin
-      mem[addr] <= data;
+      mem[addr_bus] <= data_bus;
     end
   end
 endmodule

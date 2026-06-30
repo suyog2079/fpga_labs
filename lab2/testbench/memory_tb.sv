@@ -6,23 +6,23 @@ module memory_tb;
   localparam DATA_LINES = 8;
 
   logic rd_wr_bar;
-  logic [AD_LINES-1:0] addr;
+  logic [AD_LINES-1:0] addr_bus;
   logic clk;
   logic cs;
 
-  tri [DATA_LINES-1:0] data;
+  tri [DATA_LINES-1:0] data_bus;
   logic [DATA_LINES-1:0] data_drv;
 
   // Drive bus only during writes
-  assign data = (!rd_wr_bar && cs) ? data_drv : 'z;
+  assign data_bus = (!rd_wr_bar && cs) ? data_drv : 'z;
 
   memory #(
       .AD_LINES  (AD_LINES),
       .DATA_LINES(DATA_LINES)
   ) dut (
       .rd_wr_bar(rd_wr_bar),
-      .addr(addr),
-      .data(data),
+      .addr_bus(addr_bus),
+      .data_bus(data_bus),
       .clk(clk),
       .cs(cs)
   );
@@ -39,7 +39,7 @@ module memory_tb;
       @(negedge clk);
       cs        = 1;
       rd_wr_bar = 0;
-      addr      = wr_addr;
+      addr_bus      = wr_addr;
       data_drv  = wr_data;
 
       @(posedge clk);  // write occurs here
@@ -56,10 +56,10 @@ module memory_tb;
       @(negedge clk);
       cs        = 1;
       rd_wr_bar = 1;
-      addr      = rd_addr;
+      addr_bus      = rd_addr;
 
       #1;  // allow combinational read
-      rd_data = data;
+      rd_data = data_bus;
 
       @(negedge clk);
       cs = 0;
@@ -71,7 +71,7 @@ module memory_tb;
   initial begin
     cs        = 0;
     rd_wr_bar = 1;
-    addr      = 0;
+    addr_bus      = 0;
     data_drv  = 'z;
 
     // Write some values

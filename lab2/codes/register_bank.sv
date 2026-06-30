@@ -6,13 +6,12 @@ module register_bank #(
     input logic clk,
     input alu_db_bar,
     input rd_wr_bar,
-    input mv,
+    input swp,
     input logic [2:0] reg_sel[1:0],
     input logic cs,
     input [DATA_LINES - 1:0] alu_input,
     output logic [DATA_LINES - 1 : 0] alu_out[1:0]
 );
-  reg [7:0] temp;
   reg [DATA_LINES - 1:0] register[0:NO_REGISTERS - 1];
   // connect data_bus to selected register to out selected register value to
   // the data bus
@@ -21,8 +20,8 @@ module register_bank #(
   assign alu_out[1] = register[reg_sel[1]];
   always_ff @(posedge clk) begin : blockName
     if (cs) begin
-      if (mv) begin
-        temp <= register[reg_sel[0]];
+      if (swp) begin
+        temp = register[reg_sel[0]];
         register[reg_sel[0]] <= register[reg_sel[1]];
         register[reg_sel[1]] <= temp;
       end else if (!rd_wr_bar) begin

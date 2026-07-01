@@ -4,6 +4,7 @@ module control_unit #(
 ) (
     // common signals
     input logic clk,
+		input wire [DATA_LINES -1 : 0] acc_in,
     output logic [AD_LINES - 1 : 0] addr_bus,
     inout wire [DATA_LINES -1 : 0] data_bus,
     // memory control lines and signals.
@@ -12,9 +13,9 @@ module control_unit #(
 
     // register bank control lines and signals
     output logic [2:0] reg_sel[1:0],
-    output reg_alu_db_bar,
-    output reg_rd_wr_bar,
-    output swp,
+    output logic reg_alu_db_bar,
+    output logic reg_rd_wr_bar,
+    output logic swp,
     output logic reg_cs,
 
     // alu control bits
@@ -22,9 +23,10 @@ module control_unit #(
 
 );
 
-  reg [ AD_LINES - 1 : 0] pc;
-  reg [  AD_LINES -1 : 0] mem_address;
+  reg [AD_LINES - 1 : 0] pc;
+  reg [AD_LINES -1 : 0] mem_address;
   reg [DATA_LINES -1 : 0] ir;
+	reg [DATA_LINES -1 : 0] flag_register;
 
   typedef enum {
     FETCH,
@@ -37,8 +39,8 @@ module control_unit #(
 
   typedef enum {
     SWAP,
-    // LOAD,
-    // STORE,
+		JUMP,
+    MEMORY_OPERATION,
     ARITH
   } inst_t;
   inst_t instruction_type;
@@ -57,10 +59,12 @@ module control_unit #(
   fetch_number_t fetch_number;
 
   logic [DATA_LINES -1:0] recv_data;
+  logic [DATA_LINES -1:0] acc_data;
   assign recv_data = data_bus;
+	assign acc_data = acc_in;
 
   initial begin
-    pc <= 4'h0;
+    pc <= 16'h0;
     state <= FETCH;
   end
 
@@ -98,13 +102,58 @@ module control_unit #(
               // bit division not done yet
               1'b1: begin
                 fetch_number <= FIRST;
+							// 010
                 case (ir[5:5])
-                  1'b0: begin
-                    store_type <= MEMORY_2_REG;
-                  end
-                  1'b1: begin
-                    store_type <= REG_2_MEMORY;
-                  end
+									1'b0: begin
+										case (ir[4:4])
+											1'b1: begin
+												store_type <= MEMORY_2_REG;
+											end
+											1'b0: begin
+												store_type <= REG_2_MEMORY;
+											end
+											default : begin
+												state <= FETCH;
+											end
+										endcase
+										instruction_type <= MEMORY_OPERATION;
+									end
+									1'b1: begin
+										flag_register = acc_data;
+										case (ir[4:2])
+											// unconditional jump
+											3'b000 : begin
+												instruction_type <= JUMP; 
+											end
+											//JC 
+											3'b001 : begin
+												if (flag_register[1:1]) begin
+													instruction_type <= JUMP;
+												end
+											end
+											//JNC
+											3'b010 : begin
+												if (!flag_register[1:1]) begin
+													instruction_type <= JUMP;
+												end
+											end
+											// JZ
+											3'b011 : begin
+												if (flag_register[2:2]) begin
+													instruction_type <= JUMP;
+												end
+											end
+											//JNZ
+											3'b100 : begin
+												if (!flag_register[2:2]) begin
+													instruction_type <= JUMP;
+												end
+											end
+											default: begin
+												state <= FETCH;
+											end
+										endcase
+									end
                   default: begin
                     state <= FETCH;
                   end
@@ -138,12 +187,12 @@ module control_unit #(
             fetch_number <= SECOND;
           end
           SECOND: begin
-            mem_cs <= 1;
             mem_address[AD_LINES-DATA_LINES-1 : 0] <= recv_data;  //lower oeder address
+            mem_cs <= 1;
             addr_bus <= pc;
             mem_rd_wr_bar <= 1'b1;
             pc <= pc + 1;
-            state <= STORE;
+            state <= EXECUTE;
           end
           default: begin
             state <= FETCH;
@@ -152,6 +201,9 @@ module control_unit #(
       end
 
       EXECUTE: begin
+				if (instruction_type == JUMP || instruction_type == MEMORY_OPERATION) begin
+          mem_address[AD_LINES-1 : AD_LINES-DATA_LINES] <= recv_data;  //higher order address
+				end
         case (instruction_type)
           SWAP: begin
             reg_sel[0] <= ir[5:3];
@@ -170,6 +222,13 @@ module control_unit #(
             state <= STORE;
             store_type <= ALU_2_REG;
           end
+					MEMORY_OPERATION: begin
+						state <= STORE;
+					end
+					JUMP: begin
+						pc <= mem_address;
+						state <= FETCH;
+					end
           default: begin
             state <= FETCH;
           end
@@ -177,9 +236,6 @@ module control_unit #(
       end
 
       STORE: begin
-        if (store_type != ALU_2_REG) begin
-          mem_address[AD_LINES-1 : AD_LINES-DATA_LINES] <= recv_data;  //higher order address
-        end
         case (store_type)
           ALU_2_REG: begin
             reg_cs <= 1;

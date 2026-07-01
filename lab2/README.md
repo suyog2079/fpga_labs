@@ -164,4 +164,4 @@ The control unit generates the following output signals:
 | 25    | FETCH      | NOP         | Fetch NOP at 0x2000                          | PC = 0x2001, IR = 0x00                   | PC = 0x2001, IR = 0x00                   |
 
 The screenshot of the control signals in GTKwave is:
-![Control Unit Signals](./imgs/cu_waves.png)
+![Control Unit Signals](./imgs/cu_wave.png)

@@ -3,7 +3,7 @@
 **Name**: Prashant Neupane  
 **Roll No**: 079BEI025  
 **Name**: Suyog Bhandari 
-**Roll No**: 079BCT09x  
+**Roll No**: 079BCT091  
 
 ## Overview
 Implementation of control unit for 8bit processor .This control unit implements a 5‑state finite‑state machine (FSM) and supports the following instruction types:
@@ -30,18 +30,18 @@ All instructions are 8‑bits wide, and some require additional address bytes (f
 | `011011xx`      | JZ       | Jump if the zero flag is set.                                                                   |
 | `011100xx`      | JNZ      | Jump if the zero flag is not set.                                                               |
 | `10000xxx`      | NOP      | No operation; ALU result and flags remain unchanged.                                            |
-| `10001xxx`      | ADD      | Add R0 and the selected register; store result in the selected register.                        |
-| `10010xxx`      | SUB      | Subtract the selected register from R0; store result in the selected register.                  |
-| `10011xxx`      | INC      | Increment R0; store result in the selected register.                                            |
-| `10100xxx`      | DEC      | Decrement R0; store result in the selected register.                                            |
-| `10101xxx`      | COMP     | Bitwise complement (NOT) of R0; store result in the selected register.                          |
+| `10001xxx`      | ADD      | Add R0 and the selected register; store result in R0.                                           |
+| `10010xxx`      | SUB      | Subtract the selected register from R0; store result in R0.                                     |
+| `10011xxx`      | INC      | Increment R0; store result in R0.                                                               |
+| `10100xxx`      | DEC      | Decrement R0; store result in R0.                                                               |
+| `10101xxx`      | COMP     | Bitwise complement (NOT) of R0; store result in R0.                                             |
 | `10110xxx`      | LSHIFT   | Left shift R0 by the amount given in the lower 3 bits of the selected register; store result.   |
 | `10111xxx`      | RSHIFT   | Right shift R0 by the amount given in the lower 3 bits of the selected register; store result.  |
 | `11000xxx`      | GETFLAG  | Load the current flag register into the selected register.                                      |
 | `11001xxx`      | SETFLAG  | Set the flag register from the lower 3 bits of the selected register.                           |
-| `11010xxx`      | AND      | Bitwise AND of R0 and the selected register; store result in the selected register.             |
-| `11011xxx`      | OR       | Bitwise OR of R0 and the selected register; store result in the selected register.              |
-| `11100xxx`      | XOR      | Bitwise XOR of R0 and the selected register; store result in the selected register.             |
+| `11010xxx`      | AND      | Bitwise AND of R0 and the selected register; store result in R0.                                |
+| `11011xxx`      | OR       | Bitwise OR of R0 and the selected register; store result in R0.                                 |
+| `11100xxx`      | XOR      | Bitwise XOR of R0 and the selected register; store result in R0.                                |
 
 **Notes**:
 - For `MEM2REG`, `REG2MEM`, and all jump instructions, the 16‑bit address is fetched as two bytes immediately following the instruction (lower byte, then higher byte).
@@ -163,4 +163,5 @@ The control unit generates the following output signals:
 | 24    | EXECUTE    | JMP         | Update PC to 0x2000                          | PC = 0x2000                              | PC = 0x2000                              |
 | 25    | FETCH      | NOP         | Fetch NOP at 0x2000                          | PC = 0x2001, IR = 0x00                   | PC = 0x2001, IR = 0x00                   |
 
-
+The screenshot of the control signals in GTKwave is:
+![Control Unit Signals](./imgs/cu_waves.png)

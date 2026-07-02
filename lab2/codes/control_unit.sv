@@ -20,7 +20,6 @@ module control_unit #(
 
     // alu control bits
     output logic [3:0] alu_sel
-
 );
 
   reg [ AD_LINES - 1 : 0] pc;

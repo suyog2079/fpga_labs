@@ -17,7 +17,6 @@ module tb_control_unit;
   wire [DATA_LINES-1:0] acc_out;
   wire [DATA_LINES-1:0] alu_in;
   wire [DATA_LINES-1:0] alu_out[1:0];
-  wire [2:0] alu_flag;
 
 	// Control Unit
   control_unit #(
@@ -74,8 +73,7 @@ module tb_control_unit;
     .reset(reset),
     .operand1(alu_out[0]),
     .operand2(alu_out[1]),
-    .result(alu_in),
-    .flag(alu_flag)
+    .result(alu_in)
   );
 
 	// Clock generation

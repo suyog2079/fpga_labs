@@ -4,13 +4,14 @@ module ALU (
     reset,
     input [7:0] operand1,
     operand2,
-    output reg [7:0] result,
-    output reg [2:0] flag  //{Zero, Carry, Parity}
+    output reg [7:0] result
 );
 
   wire [7:0] add_result, sub_result, inc_result, dec_result, left_shift_result, right_shift_result, cmp_result;
   wire add_carry, sub_carry, inc_carry, dec_carry;
 
+
+  reg [2:0] flag;  //{Zero, Carry, Parity}
   // checkParity parity(.in(result), .out(flag[0]));
   bit8adder adder (
       .a(operand1),

@@ -2,8 +2,8 @@ module register_bank #(
     parameter int NO_REGISTERS = 8,
     parameter int DATA_LINES   = 8
 ) (
-    inout wire [DATA_LINES - 1:0] data_bus,
     input logic clk,
+    inout wire [DATA_LINES - 1:0] data_bus,
     input alu_db_bar,
     input rd_wr_bar,
     input swp,

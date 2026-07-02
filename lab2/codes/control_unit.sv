@@ -4,6 +4,7 @@ module control_unit #(
 ) (
     // common signals
     input logic clk,
+    input logic reset,
     input wire [DATA_LINES -1 : 0] acc_in,
     output logic [AD_LINES - 1 : 0] addr_bus,
     inout wire [DATA_LINES -1 : 0] data_bus,
@@ -64,6 +65,14 @@ module control_unit #(
 
   initial begin
     pc <= 16'h0;
+    state <= FETCH;
+  end
+
+  always_ff @(posedge reset) begin
+    pc <= 16'h0;
+    ir <= 8'h0;
+    mem_address <= 16'h0;
+    flag_register <= 8'h0;
     state <= FETCH;
   end
 
@@ -225,7 +234,7 @@ module control_unit #(
             state <= STORE;
           end
           JUMP: begin
-            pc <= {recv_data,mem_address[DATA_LINES-1:0]};
+            pc <= {recv_data, mem_address[DATA_LINES-1:0]};
             state <= FETCH;
           end
           default: begin

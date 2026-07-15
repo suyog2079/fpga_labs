@@ -84,7 +84,7 @@ module control_unit #(
     swp            <= 0;
     reg_rd_wr_bar  <= 1;
     reg_alu_db_bar <= 0;
-		alu_sel <= 3'b0;
+		alu_sel <= 4'b0;
     case (state)
       FETCH: begin
         mem_cs <= 1;
